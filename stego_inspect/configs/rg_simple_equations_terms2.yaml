@@ -1,0 +1,10 @@
+# Reasoning Gym: Simple Equations (2 terms)
+# Solve for x in linear equations
+
+hidden_dataset: reasoning_gym
+dataset_path: stego_inspect/data/rg_simple_equations_terms2.jsonl
+algorithm: sentence_acrostic
+include_translation: false
+include_monitor: true
+n_samples: 50
+seed: 42

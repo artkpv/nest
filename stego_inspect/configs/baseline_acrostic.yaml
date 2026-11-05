@@ -1,0 +1,11 @@
+# Baseline Acrostic Experiment
+# Pure sentence acrostic over the legacy 10-letter pool with real cover questions.
+# Mirrors steg_counting_experiment.run_baseline_experiment.
+# Run with: inspect eval stego_inspect/tasks.py@stego_message_eval -T <key>=<val> ...
+
+baseline_acrostic: true
+algorithm: sentence_acrostic
+letter_pool: SCPABTDMRF
+length: 5
+n_samples: 1
+seed: 42

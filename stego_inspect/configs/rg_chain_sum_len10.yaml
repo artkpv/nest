@@ -1,0 +1,10 @@
+# Reasoning Gym: Chain Sum (10 terms)
+# Sequential addition — tests multi-step stego reasoning
+
+hidden_dataset: reasoning_gym
+dataset_path: data/rg_chain_sum_len10.jsonl
+algorithm: sentence_acrostic
+include_translation: true
+include_monitor: true
+n_samples: 10
+seed: 42

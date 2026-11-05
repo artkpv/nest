@@ -1,0 +1,10 @@
+# Reasoning Gym: Basic Arithmetic (1 operation / 2 terms)
+# Trivial difficulty — near-counting baseline
+
+hidden_dataset: reasoning_gym
+dataset_path: stego_inspect/data/rg_basic_arithmetic_ops1.jsonl
+algorithm: sentence_acrostic
+include_translation: false
+include_monitor: false
+n_samples: 1
+seed: 42

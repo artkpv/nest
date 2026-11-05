@@ -1,0 +1,13 @@
+# Counting Experiment (D=4)
+# Tests sentence acrostic encoding for number sequences
+
+hidden_dataset: counting
+algorithm: sentence_acrostic
+D: 4
+use_mapping: true
+cover_dataset: custom_topics
+include_baselines: false
+include_translation: false
+include_monitor: false
+n_samples: 1
+seed: 42

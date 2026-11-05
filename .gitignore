@@ -1,0 +1,9 @@
+.git
+__pycache__
+.venv
+logs
+api_calls.jsonl
+
+artifacts*/
+
+formalization*.md

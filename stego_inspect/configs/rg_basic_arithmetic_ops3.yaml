@@ -1,0 +1,12 @@
+# Reasoning Gym: Basic Arithmetic (3 operations / 4 terms)
+# Medium difficulty — good starting point for smoke tests
+
+hidden_dataset: reasoning_gym
+dataset_path: data/rg_basic_arithmetic_ops3.jsonl
+algorithm: sentence_acrostic
+include_translation: true
+include_monitor: true
+n_samples: 5
+seed: 42
+baselines: direct,cot,ttc,dual
+max_tokens: 4096

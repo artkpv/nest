@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stego-inspect"
+version = "0.1.0"
+description = "Inspect AI evaluation framework for LLM steganography capabilities"
+requires-python = ">=3.11"
+dependencies = [
+    "inspect-ai",
+    "click",
+    "matplotlib",
+    "pandas",
+    "seaborn",
+    "numpy",
+    "scipy",
+    "reasoning-gym>=0.1.25"
+]
+
+[project.scripts]
+stego-plot = "stego_inspect.analysis.cli:plot"
+
+# Registers custom Inspect providers (the `prefill/` model API) at startup.
+# Inspect resolves --model BEFORE loading the task file, so importing the
+# module from tasks.py is too late for the CLI path; it has to be an entry point.
+[project.entry-points.inspect_ai]
+stego_inspect = "stego_inspect.providers"
+
+[tool.hatch.build.targets.wheel]
+packages = ["stego_inspect"]
