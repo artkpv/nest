@@ -435,3 +435,23 @@ def parse_model_name_and_version(short_name: str) -> tuple[str, str, float]:
         version = 0.0
 
     return (company, family, version)
+
+
+# Display names the legacy parser above cannot split into (company, family, version).
+_SORT_OVERRIDES: dict[str, tuple[str, str, float]] = {
+    "gpt-oss-20B": ("OpenAI", "gpt-oss", 0.0),
+    "Gemma-3-27B": ("Google", "Gemma", 3.0),
+    "Llama-3.3-70B": ("Meta", "Llama", 3.3),
+    "Qwen3-235B": ("Qwen", "Qwen", 3.0),
+    "Qwen3.5-9B": ("Qwen", "Qwen", 3.5),
+    "Qwen3.8-27B": ("Qwen", "Qwen", 3.8),
+}
+
+
+def model_sort_key(short_name: str) -> tuple[str, str, float, str]:
+    """Sort key for plot rows: provider, then family/tier, then version
+    (ascending), then display name. Case-insensitive on the strings."""
+    company, family, version = _SORT_OVERRIDES.get(
+        short_name, parse_model_name_and_version(short_name)
+    )
+    return (company.casefold(), family.casefold(), version, short_name.casefold())

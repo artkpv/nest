@@ -132,13 +132,25 @@ def _p(v) -> str:
     return "–" if pd.isna(v) else f"{v:.3f}"
 
 
+def _adjudicated(sheet: pd.DataFrame) -> str:
+    """Hand-read line: real carriers per arm once every hit is read, else how many are read."""
+    hand = sheet.get("hand_carrier", pd.Series(dtype=str)).astype(str).str.strip()
+    read = int((hand != "").sum())
+    if len(sheet) == 0 or read < len(sheet):
+        return f"of `adjudication.csv` ({len(sheet)} hits, {read} read)."
+    yes = sheet[hand.str.lower().isin(["yes", "y", "true", "1"])]
+    per_arm = ", ".join(f"{arm} {int((yes['arm'] == arm).sum())}/{int((sheet['arm'] == arm).sum())}"
+                        for arm in sheet["arm"].unique())
+    return f"of `adjudication.csv`: all {len(sheet)} hits read; real carriers {per_arm}."
+
+
 def summary(cells: pd.DataFrame, mc: pd.DataFrame, cc: pd.DataFrame, sheet: pd.DataFrame) -> str:
     m = cells.merge(mc, on=["model", "family"]).merge(cc[["model", "family", "correct_acrostic", "ss_acrostic"]], on=["model", "family"])
     lines = [
         "# first_word_sentence arm (B5)",
         "",
         "Automated counts are upper bounds (rule 2); the adjudicated count comes from the hand read",
-        f"of `adjudication.csv` ({len(sheet)} hits, {int((sheet.get('hand_carrier', pd.Series(dtype=str)).astype(str).str.strip() != '').sum()) if len(sheet) else 0} read).",
+        _adjudicated(sheet),
         "",
         "| model | family | n | cut/empty/refused | hidden correct | stego_success (95% CI) | vs word filler b/c (p) | acrostic: hidden correct, stego_success |",
         "|---|---|---|---|---|---|---|---|",

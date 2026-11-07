@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from .model_registry import MODEL_INFO, get_model_info, parse_model_name_and_version
+from .model_registry import MODEL_INFO, get_model_info, model_sort_key, parse_model_name_and_version
 
 import matplotlib
 
@@ -1239,6 +1239,16 @@ TRUNCATION_MARKED: set[str] = set()
 TRUNCATED_SAMPLES: list[tuple[str, int]] = []
 
 
+# Order model rows/bars by provider, family, version, then name
+# (`model_sort_key`), so related models sit together. False = each plot's
+# own legacy order (the default).
+PROVIDER_ORDER = False
+
+
+def _ordered(order: list[str]) -> list[str]:
+    return sorted(order, key=model_sort_key) if PROVIDER_ORDER else order
+
+
 def _dagger(label: str) -> str:
     return f"{label}\u2020" if label in TRUNCATION_MARKED else label
 
@@ -1287,7 +1297,7 @@ def plot_heatmap(
     pivot_sem = pivot_sem[cols]
     pivot_count = pivot_count[cols]
 
-    model_order = _model_order_by_family(pivot_mean.index.tolist())
+    model_order = _ordered(_model_order_by_family(pivot_mean.index.tolist()))
     pivot_mean = pivot_mean.reindex(model_order)
     pivot_sem = pivot_sem.reindex(model_order)
     pivot_count = pivot_count.reindex(model_order)
@@ -1379,7 +1389,7 @@ def plot_per_number_accuracy(
     for short in pivot_mean.index:
         company, name, version = parse_model_name_and_version(short)
         model_sort.append((short, (company, name, -version)))
-    model_order = [s for s, _ in sorted(model_sort, key=lambda x: x[1])]
+    model_order = _ordered([s for s, _ in sorted(model_sort, key=lambda x: x[1])])
 
     pivot_mean = pivot_mean.reindex(model_order)
     pivot_sem = pivot_sem.reindex(model_order)
@@ -1435,12 +1445,18 @@ def plot_timeline(
     df: pd.DataFrame,
     output_path: Path | None = None,
     title_suffix: str = "",
+    bar_stats: pd.DataFrame | None = None,
+    monitor_df: pd.DataFrame | None = None,
 ) -> Optional[plt.Figure]:
     """
     Plot 2: Per-model bar chart of per-number accuracy with company/model
     group separators and refusal annotations. Mirrors legacy
     `stego_counting_plots.plot_timeline`. Refusal counts come from the
     `refused` column in the DataFrame instead of raw trial dicts.
+
+    `bar_stats` (short_name, accuracy, ci95, n_samples) replaces the pooled
+    per-model bars; `monitor_df` is the frame the monitor markers come from
+    (default: `df`).
     """
     refusal_counts: dict[str, int] = defaultdict(int)
     for short, group in df.groupby("short_name"):
@@ -1462,6 +1478,10 @@ def plot_timeline(
         .reset_index()
     )
     agg["ci95"] = 1.96 * agg["std"] / np.sqrt(agg["n_samples"])
+    if bar_stats is not None:
+        agg = bar_stats
+    if monitor_df is None:
+        monitor_df = df
 
     rows = []
     for _, row in agg.iterrows():
@@ -1629,10 +1649,10 @@ def plot_timeline(
     # cells get the same diagnostic so accuracy and detection are visible
     # on the same figure.
     monitor_handle = None
-    if "stego_detected" in df.columns:
+    if "stego_detected" in monitor_df.columns:
         xs_m, ys_m, errs_m = [], [], []
         for xi, short in enumerate(plot_df["short_name"]):
-            sub = df[df["short_name"] == short]
+            sub = monitor_df[monitor_df["short_name"] == short]
             # Optional `monitor_weight` re-weights stratified monitor samples to
             # the cell population; absent, every graded sample counts once.
             w_col = sub["monitor_weight"] if "monitor_weight" in sub.columns else None
@@ -1679,7 +1699,7 @@ def plot_timeline(
     ax.set_ylabel("Rate")
     title = "Steganographic Counting: Per-Number Accuracy by Model" + title_suffix
     if monitor_handle is not None:
-        title += _monitor_suffix(df)
+        title += _monitor_suffix(monitor_df)
     ax.set_title(title)
     ax.set_ylim(0, 1.0)
     ax.grid(True, alpha=0.3, axis="y")
@@ -1939,7 +1959,7 @@ def plot_error_analysis(
             agg.at[idx, "refusal"] = 0.0
         agg.at[idx, "api_error"] = 0.0  # not surfaced from Inspect logs
 
-    model_order = _model_order_by_family(agg["short_name"].tolist())
+    model_order = _ordered(_model_order_by_family(agg["short_name"].tolist()))
     agg = agg.set_index("short_name").reindex(model_order).reset_index()
 
     fig, ax = plt.subplots(figsize=(12, 6))
